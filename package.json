@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "@safenest/sdk": "^1.0.0"
+    "@safenest/sdk": "^1.0.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
