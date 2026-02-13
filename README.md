@@ -25,7 +25,9 @@
 
 Tuteliq MCP Server brings AI-powered child safety tools directly into Claude, Cursor, and other MCP-compatible AI assistants. Ask Claude to check messages for bullying, detect grooming patterns, or generate safety action plans.
 
-## Available Tools
+## Available Tools (33)
+
+### Safety Detection
 
 | Tool | Description |
 |------|-------------|
@@ -36,6 +38,60 @@ Tuteliq MCP Server brings AI-powered child safety tools directly into Claude, Cu
 | `analyze_emotions` | Analyze emotional content and mental state indicators |
 | `get_action_plan` | Generate age-appropriate guidance for safety situations |
 | `generate_report` | Create incident reports from conversations |
+
+### Voice & Image Analysis
+
+| Tool | Description |
+|------|-------------|
+| `analyze_voice` | Transcribe audio and run safety analysis on the transcript |
+| `analyze_image` | Analyze images for visual safety + OCR text extraction |
+
+### Webhook Management
+
+| Tool | Description |
+|------|-------------|
+| `list_webhooks` | List all configured webhooks |
+| `create_webhook` | Create a new webhook endpoint |
+| `update_webhook` | Update webhook configuration |
+| `delete_webhook` | Delete a webhook |
+| `test_webhook` | Send a test payload to verify webhook |
+| `regenerate_webhook_secret` | Regenerate webhook signing secret |
+
+### Pricing
+
+| Tool | Description |
+|------|-------------|
+| `get_pricing` | Get available pricing plans |
+| `get_pricing_details` | Get detailed pricing with features and limits |
+
+### Usage & Billing
+
+| Tool | Description |
+|------|-------------|
+| `get_usage_history` | Get daily usage history |
+| `get_usage_by_tool` | Get usage by tool/endpoint |
+| `get_usage_monthly` | Get monthly usage with billing info |
+
+### GDPR Account
+
+| Tool | Description |
+|------|-------------|
+| `delete_account_data` | Delete all account data (Right to Erasure) |
+| `export_account_data` | Export all account data as JSON (Data Portability) |
+| `record_consent` | Record user consent for data processing |
+| `get_consent_status` | Get current consent status |
+| `withdraw_consent` | Withdraw a previously granted consent |
+| `rectify_data` | Correct user data (Right to Rectification) |
+| `get_audit_logs` | Get audit trail of all data operations |
+
+### Breach Management
+
+| Tool | Description |
+|------|-------------|
+| `log_breach` | Log a new data breach (starts 72-hour notification clock) |
+| `list_breaches` | List all data breaches, optionally filtered by status |
+| `get_breach` | Get details of a specific data breach |
+| `update_breach_status` | Update breach status and notification progress |
 
 ---
 
@@ -128,6 +184,19 @@ The message contains direct exclusionary language...
 
 ### Incident Report
 > "Generate an incident report from these messages..."
+
+### Voice Analysis
+> "Analyze this audio file for safety: /path/to/recording.mp3"
+
+### Image Analysis
+> "Check this screenshot for harmful content: /path/to/screenshot.png"
+
+### Webhook Management
+> "List my webhooks"
+> "Create a webhook for critical incidents at https://example.com/webhook"
+
+### Usage
+> "Show my monthly usage"
 
 ---
 

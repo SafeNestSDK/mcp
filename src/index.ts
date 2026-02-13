@@ -7,7 +7,8 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { TuteliqClient } from '@tuteliq/sdk';
+import { Tuteliq } from '@tuteliq/sdk';
+import { readFileSync } from 'fs';
 
 // Initialize Tuteliq client
 const apiKey = process.env.TUTELIQ_API_KEY;
@@ -16,7 +17,7 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const client = new TuteliqClient(apiKey);
+const client = new Tuteliq(apiKey);
 
 // Severity emoji mapping
 const severityEmoji: Record<string, string> = {
@@ -43,6 +44,9 @@ const trendEmoji: Record<string, string> = {
 
 // Tool definitions
 const tools: Tool[] = [
+  // =========================================================================
+  // Safety Detection Tools
+  // =========================================================================
   {
     name: 'detect_bullying',
     description: 'Analyze text content to detect bullying, harassment, or harmful language. Returns severity, type of bullying, confidence score, and recommended actions.',
@@ -214,7 +218,201 @@ const tools: Tool[] = [
       required: ['messages'],
     },
   },
+
+  // =========================================================================
+  // Voice & Image Analysis Tools
+  // =========================================================================
+  {
+    name: 'analyze_voice',
+    description: 'Analyze an audio file for safety concerns. Transcribes the audio via Whisper, then runs safety analysis on the transcript. Returns timestamped segments for incident reports. Supports mp3, wav, m4a, ogg, flac, webm, mp4.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file_path: {
+          type: 'string',
+          description: 'Absolute path to the audio file on disk',
+        },
+        analysis_type: {
+          type: 'string',
+          enum: ['bullying', 'unsafe', 'grooming', 'emotions', 'all'],
+          description: 'Type of analysis to run on the transcript (default: all)',
+        },
+        child_age: {
+          type: 'number',
+          description: 'Child age (used for grooming analysis)',
+        },
+        language: {
+          type: 'string',
+          description: 'Language hint for transcription (e.g., "en", "es")',
+        },
+      },
+      required: ['file_path'],
+    },
+  },
+  {
+    name: 'analyze_image',
+    description: 'Analyze an image for visual safety concerns and OCR text extraction. Uses vision AI for content classification, then runs safety analysis on any extracted text. Supports png, jpg, jpeg, gif, webp.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file_path: {
+          type: 'string',
+          description: 'Absolute path to the image file on disk',
+        },
+        analysis_type: {
+          type: 'string',
+          enum: ['bullying', 'unsafe', 'emotions', 'all'],
+          description: 'Type of analysis to run on extracted text (default: all)',
+        },
+      },
+      required: ['file_path'],
+    },
+  },
+
+  // =========================================================================
+  // Webhook Management Tools
+  // =========================================================================
+  {
+    name: 'list_webhooks',
+    description: 'List all webhooks configured for your account.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'create_webhook',
+    description: 'Create a new webhook endpoint. The returned secret is only shown once — store it securely for signature verification.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Display name for the webhook' },
+        url: { type: 'string', description: 'HTTPS URL to receive webhook payloads' },
+        events: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Event types to subscribe to (e.g., incident.critical, grooming.detected, unsafe.detected, bullying.detected)',
+        },
+      },
+      required: ['name', 'url', 'events'],
+    },
+  },
+  {
+    name: 'update_webhook',
+    description: 'Update an existing webhook configuration.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Webhook ID' },
+        name: { type: 'string', description: 'New display name' },
+        url: { type: 'string', description: 'New HTTPS URL' },
+        events: { type: 'array', items: { type: 'string' }, description: 'New event subscriptions' },
+        is_active: { type: 'boolean', description: 'Enable or disable the webhook' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'delete_webhook',
+    description: 'Permanently delete a webhook.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Webhook ID to delete' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'test_webhook',
+    description: 'Send a test payload to a webhook to verify it is working correctly.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Webhook ID to test' },
+      },
+      required: ['id'],
+    },
+  },
+  {
+    name: 'regenerate_webhook_secret',
+    description: 'Regenerate a webhook signing secret. The old secret is immediately invalidated.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Webhook ID' },
+      },
+      required: ['id'],
+    },
+  },
+
+  // =========================================================================
+  // Pricing Tools
+  // =========================================================================
+  {
+    name: 'get_pricing',
+    description: 'Get available pricing plans for Tuteliq.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+  {
+    name: 'get_pricing_details',
+    description: 'Get detailed pricing plans with monthly/yearly prices, API call limits, and feature lists.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+
+  // =========================================================================
+  // Usage & Billing Tools
+  // =========================================================================
+  {
+    name: 'get_usage_history',
+    description: 'Get daily usage history for the past N days, showing request counts per day.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        days: {
+          type: 'number',
+          description: 'Number of days to retrieve (1-30, default: 7)',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_usage_by_tool',
+    description: 'Get usage broken down by tool/endpoint for a specific date.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        date: {
+          type: 'string',
+          description: 'Date in YYYY-MM-DD format (default: today)',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'get_usage_monthly',
+    description: 'Get monthly usage summary including billing period, limits, rate limits, and upgrade recommendations.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      required: [],
+    },
+  },
+
+  // =========================================================================
   // GDPR Account Tools
+  // =========================================================================
   {
     name: 'delete_account_data',
     description: 'Delete all account data (GDPR Article 17 — Right to Erasure). Permanently removes all stored user data.',
@@ -323,7 +521,10 @@ const tools: Tool[] = [
       required: [],
     },
   },
+
+  // =========================================================================
   // Breach Management Tools
+  // =========================================================================
   {
     name: 'log_breach',
     description: 'Log a new data breach (GDPR Article 33/34). Records breach details and starts the 72-hour notification clock.',
@@ -383,7 +584,7 @@ const tools: Tool[] = [
 const server = new Server(
   {
     name: 'tuteliq-mcp',
-    version: '1.2.0',
+    version: '2.1.0',
   },
   {
     capabilities: {
@@ -397,12 +598,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return { tools };
 });
 
+// Helper to extract filename from path
+function filenameFromPath(filePath: string): string {
+  return filePath.split('/').pop() || filePath;
+}
+
 // Call tool handler
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args = {} } = request.params;
 
   try {
     switch (name) {
+      // =====================================================================
+      // Safety Detection
+      // =====================================================================
+
       case 'detect_bullying': {
         const result = await client.detectBullying({
           content: args.content as string,
@@ -515,7 +725,6 @@ ${result.bullying ? `
 
         const emoji = trendEmoji[result.trend] || '➡️';
 
-        // Format emotion scores
         const emotionScoresList = Object.entries(result.emotion_scores)
           .sort((a, b) => b[1] - a[1])
           .map(([emotion, score]) => `- ${emotion}: ${(score * 100).toFixed(0)}%`)
@@ -587,6 +796,217 @@ ${result.recommended_next_steps.map((step, i) => `${i + 1}. ${step}`).join('\n')
         return { content: [{ type: 'text', text: response }] };
       }
 
+      // =====================================================================
+      // Voice & Image Analysis
+      // =====================================================================
+
+      case 'analyze_voice': {
+        const filePath = args.file_path as string;
+        const buffer = readFileSync(filePath);
+        const filename = filenameFromPath(filePath);
+
+        const result = await client.analyzeVoice({
+          file: buffer,
+          filename,
+          analysisType: (args.analysis_type as 'bullying' | 'unsafe' | 'grooming' | 'emotions' | 'all') || 'all',
+          language: args.language as string | undefined,
+          childAge: args.child_age as number | undefined,
+        });
+
+        const emoji = severityEmoji[result.overall_severity] || '✅';
+        const segmentLines = result.transcription.segments
+          .slice(0, 20)
+          .map(s => `\`${s.start.toFixed(1)}s–${s.end.toFixed(1)}s\` ${s.text}`)
+          .join('\n');
+
+        const analysisLines: string[] = [];
+        if (result.analysis.bullying) {
+          analysisLines.push(`**Bullying:** ${result.analysis.bullying.is_bullying ? '⚠️ Detected' : '✅ Clear'} (${(result.analysis.bullying.risk_score * 100).toFixed(0)}%)`);
+        }
+        if (result.analysis.unsafe) {
+          analysisLines.push(`**Unsafe:** ${result.analysis.unsafe.unsafe ? '⚠️ Detected' : '✅ Clear'} (${(result.analysis.unsafe.risk_score * 100).toFixed(0)}%)`);
+        }
+        if (result.analysis.grooming) {
+          analysisLines.push(`**Grooming:** ${result.analysis.grooming.grooming_risk !== 'none' ? '⚠️ ' + result.analysis.grooming.grooming_risk : '✅ Clear'} (${(result.analysis.grooming.risk_score * 100).toFixed(0)}%)`);
+        }
+        if (result.analysis.emotions) {
+          analysisLines.push(`**Emotions:** ${result.analysis.emotions.dominant_emotions.join(', ')} (${trendEmoji[result.analysis.emotions.trend] || ''} ${result.analysis.emotions.trend})`);
+        }
+
+        const response = `## 🎙️ Voice Analysis
+
+**Overall Severity:** ${emoji} ${result.overall_severity}
+**Overall Risk Score:** ${(result.overall_risk_score * 100).toFixed(0)}%
+**Language:** ${result.transcription.language}
+**Duration:** ${result.transcription.duration.toFixed(1)}s
+
+### Transcript
+${result.transcription.text}
+
+### Timestamped Segments
+${segmentLines}${result.transcription.segments.length > 20 ? `\n_...and ${result.transcription.segments.length - 20} more segments_` : ''}
+
+### Analysis Results
+${analysisLines.join('\n')}`;
+
+        return { content: [{ type: 'text', text: response }] };
+      }
+
+      case 'analyze_image': {
+        const filePath = args.file_path as string;
+        const buffer = readFileSync(filePath);
+        const filename = filenameFromPath(filePath);
+
+        const result = await client.analyzeImage({
+          file: buffer,
+          filename,
+          analysisType: (args.analysis_type as 'bullying' | 'unsafe' | 'emotions' | 'all') || 'all',
+        });
+
+        const emoji = severityEmoji[result.overall_severity] || '✅';
+
+        const textAnalysisLines: string[] = [];
+        if (result.text_analysis?.bullying) {
+          textAnalysisLines.push(`**Bullying:** ${result.text_analysis.bullying.is_bullying ? '⚠️ Detected' : '✅ Clear'} (${(result.text_analysis.bullying.risk_score * 100).toFixed(0)}%)`);
+        }
+        if (result.text_analysis?.unsafe) {
+          textAnalysisLines.push(`**Unsafe:** ${result.text_analysis.unsafe.unsafe ? '⚠️ Detected' : '✅ Clear'} (${(result.text_analysis.unsafe.risk_score * 100).toFixed(0)}%)`);
+        }
+        if (result.text_analysis?.emotions) {
+          textAnalysisLines.push(`**Emotions:** ${result.text_analysis.emotions.dominant_emotions.join(', ')}`);
+        }
+
+        const response = `## 🖼️ Image Analysis
+
+**Overall Severity:** ${emoji} ${result.overall_severity}
+**Overall Risk Score:** ${(result.overall_risk_score * 100).toFixed(0)}%
+
+### Vision Results
+**Description:** ${result.vision.visual_description}
+**Visual Severity:** ${severityEmoji[result.vision.visual_severity] || '✅'} ${result.vision.visual_severity}
+**Visual Confidence:** ${(result.vision.visual_confidence * 100).toFixed(0)}%
+**Contains Text:** ${result.vision.contains_text ? 'Yes' : 'No'}
+**Contains Faces:** ${result.vision.contains_faces ? 'Yes' : 'No'}
+${result.vision.visual_categories.length > 0 ? `**Visual Categories:** ${result.vision.visual_categories.join(', ')}` : ''}
+
+${result.vision.extracted_text ? `### Extracted Text (OCR)\n${result.vision.extracted_text}` : ''}
+
+${textAnalysisLines.length > 0 ? `### Text Analysis Results\n${textAnalysisLines.join('\n')}` : ''}`;
+
+        return { content: [{ type: 'text', text: response }] };
+      }
+
+      // =====================================================================
+      // Webhook Management
+      // =====================================================================
+
+      case 'list_webhooks': {
+        const result = await client.listWebhooks();
+        if (result.webhooks.length === 0) {
+          return { content: [{ type: 'text', text: 'No webhooks configured.' }] };
+        }
+        const lines = result.webhooks.map(w =>
+          `- ${w.is_active ? '🟢' : '⚪'} **${w.name}** — \`${w.url}\`\n  Events: ${w.events.join(', ')} _(${w.id})_`
+        ).join('\n');
+        return { content: [{ type: 'text', text: `## Webhooks\n\n${lines}` }] };
+      }
+
+      case 'create_webhook': {
+        const result = await client.createWebhook({
+          name: args.name as string,
+          url: args.url as string,
+          events: args.events as string[],
+        });
+        return { content: [{ type: 'text', text: `## ✅ Webhook Created\n\n**ID:** ${result.webhook.id}\n**Name:** ${result.webhook.name}\n**URL:** ${result.webhook.url}\n**Events:** ${result.webhook.events.join(', ')}\n\n⚠️ **Secret (save this — shown only once):**\n\`${result.secret}\`` }] };
+      }
+
+      case 'update_webhook': {
+        const result = await client.updateWebhook(args.id as string, {
+          name: args.name as string | undefined,
+          url: args.url as string | undefined,
+          events: args.events as string[] | undefined,
+          isActive: args.is_active as boolean | undefined,
+        });
+        return { content: [{ type: 'text', text: `## ✅ Webhook Updated\n\n**ID:** ${result.webhook.id}\n**Name:** ${result.webhook.name}\n**Active:** ${result.webhook.is_active ? '🟢 Yes' : '⚪ No'}` }] };
+      }
+
+      case 'delete_webhook': {
+        await client.deleteWebhook(args.id as string);
+        return { content: [{ type: 'text', text: `## ✅ Webhook Deleted\n\nWebhook \`${args.id}\` has been permanently deleted.` }] };
+      }
+
+      case 'test_webhook': {
+        const result = await client.testWebhook(args.id as string);
+        return { content: [{ type: 'text', text: `## ${result.success ? '✅' : '❌'} Webhook Test\n\n**Success:** ${result.success}\n**Status Code:** ${result.status_code}\n**Latency:** ${result.latency_ms}ms${result.error ? `\n**Error:** ${result.error}` : ''}` }] };
+      }
+
+      case 'regenerate_webhook_secret': {
+        const result = await client.regenerateWebhookSecret(args.id as string);
+        return { content: [{ type: 'text', text: `## ✅ Secret Regenerated\n\nThe old secret has been invalidated.\n\n⚠️ **New Secret (save this — shown only once):**\n\`${result.secret}\`` }] };
+      }
+
+      // =====================================================================
+      // Pricing
+      // =====================================================================
+
+      case 'get_pricing': {
+        const result = await client.getPricing();
+        const lines = result.plans.map(p =>
+          `### ${p.name}\n**Price:** ${p.price}\n${p.features.map(f => `- ${f}`).join('\n')}`
+        ).join('\n\n');
+        return { content: [{ type: 'text', text: `## Tuteliq Pricing\n\n${lines}` }] };
+      }
+
+      case 'get_pricing_details': {
+        const result = await client.getPricingDetails();
+        const lines = result.plans.map(p =>
+          `### ${p.name}\n**Monthly:** ${p.price_monthly}/mo | **Yearly:** ${p.price_yearly}/mo\n**API Calls:** ${p.api_calls_per_month}/mo | **Rate Limit:** ${p.rate_limit}/min\n${p.features.map(f => `- ${f}`).join('\n')}`
+        ).join('\n\n');
+        return { content: [{ type: 'text', text: `## Tuteliq Pricing Details\n\n${lines}` }] };
+      }
+
+      // =====================================================================
+      // Usage & Billing
+      // =====================================================================
+
+      case 'get_usage_history': {
+        const result = await client.getUsageHistory(args.days as number | undefined);
+        if (result.days.length === 0) {
+          return { content: [{ type: 'text', text: 'No usage data available.' }] };
+        }
+        const lines = result.days.map(d =>
+          `| ${d.date} | ${d.total_requests} | ${d.success_requests} | ${d.error_requests} |`
+        ).join('\n');
+        return { content: [{ type: 'text', text: `## Usage History\n\n| Date | Total | Success | Errors |\n|------|-------|---------|--------|\n${lines}` }] };
+      }
+
+      case 'get_usage_by_tool': {
+        const result = await client.getUsageByTool(args.date as string | undefined);
+        const toolLines = Object.entries(result.tools).map(([tool, count]) => `- **${tool}:** ${count}`).join('\n');
+        const endpointLines = Object.entries(result.endpoints).map(([ep, count]) => `- **${ep}:** ${count}`).join('\n');
+        return { content: [{ type: 'text', text: `## Usage by Tool — ${result.date}\n\n### By Tool\n${toolLines || '_No data_'}\n\n### By Endpoint\n${endpointLines || '_No data_'}` }] };
+      }
+
+      case 'get_usage_monthly': {
+        const result = await client.getUsageMonthly();
+        const response = `## Monthly Usage
+
+**Tier:** ${result.tier_display_name}
+**Billing Period:** ${result.billing.current_period_start} → ${result.billing.current_period_end} (${result.billing.days_remaining} days left)
+
+### Usage
+**Used:** ${result.usage.used} / ${result.usage.limit} (${result.usage.percent_used.toFixed(1)}%)
+**Remaining:** ${result.usage.remaining}
+**Rate Limit:** ${result.rate_limit.requests_per_minute}/min
+
+${result.recommendations ? `### Recommendation\n${result.recommendations.reason}\n**Suggested Tier:** ${result.recommendations.suggested_tier}\n[Upgrade](${result.recommendations.upgrade_url})` : ''}`;
+        return { content: [{ type: 'text', text: response }] };
+      }
+
+      // =====================================================================
+      // GDPR Account
+      // =====================================================================
+
       case 'delete_account_data': {
         const result = await client.deleteAccountData();
         return { content: [{ type: 'text', text: `## ✅ Account Data Deleted\n\n**Message:** ${result.message}\n**Records Deleted:** ${result.deleted_count}` }] };
@@ -644,6 +1064,10 @@ ${result.recommended_next_steps.map((step, i) => `${i + 1}. ${step}`).join('\n')
         ).join('\n');
         return { content: [{ type: 'text', text: `## 📋 Audit Logs\n\n${logLines}` }] };
       }
+
+      // =====================================================================
+      // Breach Management
+      // =====================================================================
 
       case 'log_breach': {
         const result = await client.logBreach({
