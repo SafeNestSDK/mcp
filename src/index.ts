@@ -7,7 +7,8 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
-import { Tuteliq } from '@tuteliq/sdk';
+import { Tuteliq, WebhookEventType } from '@tuteliq/sdk';
+import type { ConsentType, AuditAction, BreachSeverity, BreachStatus, BreachNotificationStatus } from '@tuteliq/sdk';
 import { readFileSync } from 'fs';
 
 // Initialize Tuteliq client
@@ -915,19 +916,19 @@ ${textAnalysisLines.length > 0 ? `### Text Analysis Results\n${textAnalysisLines
         const result = await client.createWebhook({
           name: args.name as string,
           url: args.url as string,
-          events: args.events as string[],
+          events: args.events as WebhookEventType[],
         });
-        return { content: [{ type: 'text', text: `## ✅ Webhook Created\n\n**ID:** ${result.webhook.id}\n**Name:** ${result.webhook.name}\n**URL:** ${result.webhook.url}\n**Events:** ${result.webhook.events.join(', ')}\n\n⚠️ **Secret (save this — shown only once):**\n\`${result.secret}\`` }] };
+        return { content: [{ type: 'text', text: `## ✅ Webhook Created\n\n**ID:** ${result.id}\n**Name:** ${result.name}\n**URL:** ${result.url}\n**Events:** ${result.events.join(', ')}\n\n⚠️ **Secret (save this — shown only once):**\n\`${result.secret}\`` }] };
       }
 
       case 'update_webhook': {
         const result = await client.updateWebhook(args.id as string, {
           name: args.name as string | undefined,
           url: args.url as string | undefined,
-          events: args.events as string[] | undefined,
+          events: args.events as WebhookEventType[] | undefined,
           isActive: args.is_active as boolean | undefined,
         });
-        return { content: [{ type: 'text', text: `## ✅ Webhook Updated\n\n**ID:** ${result.webhook.id}\n**Name:** ${result.webhook.name}\n**Active:** ${result.webhook.is_active ? '🟢 Yes' : '⚪ No'}` }] };
+        return { content: [{ type: 'text', text: `## ✅ Webhook Updated\n\n**ID:** ${result.id}\n**Name:** ${result.name}\n**Active:** ${result.is_active ? '🟢 Yes' : '⚪ No'}` }] };
       }
 
       case 'delete_webhook': {
@@ -1020,14 +1021,14 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
 
       case 'record_consent': {
         const result = await client.recordConsent({
-          consent_type: args.consent_type as string,
+          consent_type: args.consent_type as ConsentType,
           version: args.version as string,
         });
         return { content: [{ type: 'text', text: `## ✅ Consent Recorded\n\n**Type:** ${result.consent.consent_type}\n**Status:** ${result.consent.status}\n**Version:** ${result.consent.version}` }] };
       }
 
       case 'get_consent_status': {
-        const result = await client.getConsentStatus(args.type as string | undefined);
+        const result = await client.getConsentStatus(args.type as ConsentType | undefined);
         if (result.consents.length === 0) {
           return { content: [{ type: 'text', text: 'No consent records found.' }] };
         }
@@ -1038,7 +1039,7 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
       }
 
       case 'withdraw_consent': {
-        const result = await client.withdrawConsent(args.type as string);
+        const result = await client.withdrawConsent(args.type as ConsentType);
         return { content: [{ type: 'text', text: `## ⚠️ Consent Withdrawn\n\n**Type:** ${result.consent.consent_type}\n**Status:** ${result.consent.status}` }] };
       }
 
@@ -1053,7 +1054,7 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
 
       case 'get_audit_logs': {
         const result = await client.getAuditLogs({
-          action: args.action as string | undefined,
+          action: args.action as AuditAction | undefined,
           limit: args.limit as number | undefined,
         });
         if (result.audit_logs.length === 0) {
@@ -1073,7 +1074,7 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
         const result = await client.logBreach({
           title: args.title as string,
           description: args.description as string,
-          severity: args.severity as string,
+          severity: args.severity as BreachSeverity,
           affected_user_ids: args.affected_user_ids as string[],
           data_categories: args.data_categories as string[],
           reported_by: args.reported_by as string,
@@ -1084,7 +1085,7 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
 
       case 'list_breaches': {
         const result = await client.listBreaches({
-          status: args.status as string | undefined,
+          status: args.status as BreachStatus | undefined,
           limit: args.limit as number | undefined,
         });
         if (result.breaches.length === 0) {
@@ -1104,8 +1105,8 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
 
       case 'update_breach_status': {
         const result = await client.updateBreachStatus(args.id as string, {
-          status: args.status as string,
-          notification_status: args.notification_status as string | undefined,
+          status: args.status as BreachStatus,
+          notification_status: args.notification_status as BreachNotificationStatus | undefined,
           notes: args.notes as string | undefined,
         });
         const b = result.breach;
