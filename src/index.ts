@@ -8,7 +8,7 @@ import {
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
 import { Tuteliq, WebhookEventType } from '@tuteliq/sdk';
-import type { ConsentType, AuditAction, BreachSeverity, BreachStatus, BreachNotificationStatus } from '@tuteliq/sdk';
+import type { ConsentType, AuditAction, BreachSeverity, BreachStatus, BreachNotificationStatus, DetectionResult, AnalyseMultiResult, VideoAnalysisResult, ContextInput } from '@tuteliq/sdk';
 import { readFileSync } from 'fs';
 
 // Initialize Tuteliq client
@@ -579,13 +579,181 @@ const tools: Tool[] = [
       required: ['id', 'status'],
     },
   },
+
+  // =========================================================================
+  // Fraud Detection Tools
+  // =========================================================================
+  {
+    name: 'detect_social_engineering',
+    description: 'Detect social engineering tactics such as pretexting, urgency fabrication, trust exploitation, and authority impersonation in text content.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'detect_app_fraud',
+    description: 'Detect app-based fraud patterns such as fake investment platforms, phishing apps, subscription traps, and malicious download links.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'detect_romance_scam',
+    description: 'Detect romance scam patterns such as love-bombing, financial requests, identity deception, and emotional manipulation in conversations.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'detect_mule_recruitment',
+    description: 'Detect money mule recruitment tactics such as easy-money offers, bank account sharing requests, and laundering facilitation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+
+  // =========================================================================
+  // Safety Extended Tools
+  // =========================================================================
+  {
+    name: 'detect_gambling_harm',
+    description: 'Detect gambling-related harm indicators such as chasing losses, borrowing to gamble, concealment behavior, and emotional distress from gambling.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'detect_coercive_control',
+    description: 'Detect coercive control patterns such as isolation tactics, financial control, monitoring behavior, threats, and emotional manipulation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'detect_vulnerability_exploitation',
+    description: 'Detect exploitation of vulnerable individuals including targeting the elderly, disabled, financially distressed, or emotionally vulnerable.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+  {
+    name: 'detect_radicalisation',
+    description: 'Detect radicalisation indicators such as extremist rhetoric, us-vs-them framing, calls to action, conspiracy narratives, and ideological grooming.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence excerpts' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content'],
+    },
+  },
+
+  // =========================================================================
+  // Multi-Endpoint Analysis
+  // =========================================================================
+  {
+    name: 'analyse_multi',
+    description: 'Run multiple detection endpoints on a single piece of text. Returns individual results per endpoint plus an aggregated summary with overall risk level.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string', description: 'Text content to analyze' },
+        endpoints: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Detection endpoints to run (e.g., social_engineering, app_fraud, romance_scam, mule_recruitment, gambling_harm, coercive_control, vulnerability_exploitation, radicalisation)',
+        },
+        context: { type: 'object', description: 'Optional analysis context' },
+        include_evidence: { type: 'boolean', description: 'Include supporting evidence in individual results' },
+        external_id: { type: 'string', description: 'External tracking ID' },
+        customer_id: { type: 'string', description: 'Customer identifier' },
+      },
+      required: ['content', 'endpoints'],
+    },
+  },
+
+  // =========================================================================
+  // Video Analysis
+  // =========================================================================
+  {
+    name: 'analyze_video',
+    description: 'Analyze a video file for safety concerns. Extracts key frames and runs safety classification on each. Returns timestamped findings with severity scores. Supports mp4, mov, avi, webm, mkv.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        file_path: { type: 'string', description: 'Absolute path to the video file on disk' },
+        age_group: { type: 'string', description: 'Age group for calibrated analysis (e.g., "child", "teen", "adult")' },
+      },
+      required: ['file_path'],
+    },
+  },
 ];
 
 // Create MCP server
 const server = new Server(
   {
     name: 'tuteliq-mcp',
-    version: '2.1.0',
+    version: '2.2.0',
   },
   {
     capabilities: {
@@ -602,6 +770,101 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 // Helper to extract filename from path
 function filenameFromPath(filePath: string): string {
   return filePath.split('/').pop() || filePath;
+}
+
+// Format a DetectionResult as markdown
+function formatDetectionResult(result: DetectionResult): string {
+  const detected = result.detected;
+  const levelEmoji = riskEmoji[result.level] || '⚪';
+  const label = result.endpoint
+    .split('_')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+
+  const header = detected
+    ? `## ${levelEmoji} ${label} Detected`
+    : `## ✅ No ${label} Detected`;
+
+  const categories = result.categories.length > 0
+    ? `**Categories:** ${result.categories.map(c => c.tag).join(', ')}`
+    : '';
+
+  const evidence = result.evidence && result.evidence.length > 0
+    ? `### Evidence\n${result.evidence.map(e => `- _"${e.text}"_ — **${e.tactic}** (weight: ${e.weight.toFixed(2)})`).join('\n')}`
+    : '';
+
+  const calibration = result.age_calibration?.applied
+    ? `**Age Calibration:** ${result.age_calibration.age_group} (${result.age_calibration.multiplier}x)`
+    : '';
+
+  return `${header}
+
+**Risk Score:** ${(result.risk_score * 100).toFixed(0)}%
+**Level:** ${result.level}
+**Confidence:** ${(result.confidence * 100).toFixed(0)}%
+${categories}
+
+### Rationale
+${result.rationale}
+
+### Recommended Action
+\`${result.recommended_action}\`
+
+${evidence}
+${calibration}`.trim();
+}
+
+// Format an AnalyseMultiResult as markdown
+function formatMultiResult(result: AnalyseMultiResult): string {
+  const s = result.summary;
+  const overallEmoji = riskEmoji[s.overall_risk_level] || '⚪';
+
+  const summarySection = `## Multi-Endpoint Analysis
+
+**Overall Risk:** ${overallEmoji} ${s.overall_risk_level}
+**Endpoints Analyzed:** ${s.total_endpoints}
+**Threats Detected:** ${s.detected_count}
+**Highest Risk:** ${s.highest_risk.endpoint} (${(s.highest_risk.risk_score * 100).toFixed(0)}%)
+${result.cross_endpoint_modifier ? `**Cross-Endpoint Modifier:** ${result.cross_endpoint_modifier.toFixed(2)}x` : ''}`;
+
+  const perEndpoint = result.results
+    .map(r => {
+      const emoji = r.detected ? (riskEmoji[r.level] || '⚪') : '✅';
+      return `### ${emoji} ${r.endpoint}
+**Detected:** ${r.detected ? 'Yes' : 'No'} | **Risk:** ${(r.risk_score * 100).toFixed(0)}% | **Level:** ${r.level}
+${r.categories.length > 0 ? `**Categories:** ${r.categories.map(c => c.tag).join(', ')}` : ''}
+${r.rationale}`;
+    })
+    .join('\n\n');
+
+  return `${summarySection}
+
+---
+
+${perEndpoint}`;
+}
+
+// Format a VideoAnalysisResult as markdown
+function formatVideoResult(result: VideoAnalysisResult): string {
+  const emoji = severityEmoji[result.overall_severity] || '✅';
+
+  const findingsSection = result.safety_findings.length > 0
+    ? result.safety_findings
+        .map(f => {
+          const fEmoji = severityEmoji[f.severity <= 0.3 ? 'low' : f.severity <= 0.6 ? 'medium' : f.severity <= 0.85 ? 'high' : 'critical'] || '⚪';
+          return `- \`${f.timestamp.toFixed(1)}s\` (frame ${f.frame_index}) ${fEmoji} ${f.description}\n  Categories: ${f.categories.join(', ')} | Severity: ${(f.severity * 100).toFixed(0)}%`;
+        })
+        .join('\n')
+    : '_No safety findings._';
+
+  return `## 🎬 Video Analysis
+
+**Overall Severity:** ${emoji} ${result.overall_severity}
+**Overall Risk Score:** ${(result.overall_risk_score * 100).toFixed(0)}%
+**Frames Analyzed:** ${result.frames_analyzed}
+
+### Safety Findings
+${findingsSection}`;
 }
 
 // Call tool handler
@@ -1111,6 +1374,135 @@ ${result.recommendations ? `### Recommendation\n${result.recommendations.reason}
         });
         const b = result.breach;
         return { content: [{ type: 'text', text: `## ✅ Breach Updated\n\n**ID:** ${b.id}\n**Status:** ${b.status}\n**Notification:** ${b.notification_status}` }] };
+      }
+
+      // =====================================================================
+      // Fraud Detection
+      // =====================================================================
+
+      case 'detect_social_engineering': {
+        const result = await client.detectSocialEngineering({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      case 'detect_app_fraud': {
+        const result = await client.detectAppFraud({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      case 'detect_romance_scam': {
+        const result = await client.detectRomanceScam({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      case 'detect_mule_recruitment': {
+        const result = await client.detectMuleRecruitment({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      // =====================================================================
+      // Safety Extended
+      // =====================================================================
+
+      case 'detect_gambling_harm': {
+        const result = await client.detectGamblingHarm({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      case 'detect_coercive_control': {
+        const result = await client.detectCoerciveControl({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      case 'detect_vulnerability_exploitation': {
+        const result = await client.detectVulnerabilityExploitation({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      case 'detect_radicalisation': {
+        const result = await client.detectRadicalisation({
+          content: args.content as string,
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatDetectionResult(result) }] };
+      }
+
+      // =====================================================================
+      // Multi-Endpoint Analysis
+      // =====================================================================
+
+      case 'analyse_multi': {
+        const result = await client.analyseMulti({
+          content: args.content as string,
+          detections: args.endpoints as string[],
+          context: args.context as ContextInput | undefined,
+          includeEvidence: args.include_evidence as boolean | undefined,
+          external_id: args.external_id as string | undefined,
+          customer_id: args.customer_id as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatMultiResult(result) }] };
+      }
+
+      // =====================================================================
+      // Video Analysis
+      // =====================================================================
+
+      case 'analyze_video': {
+        const filePath = args.file_path as string;
+        const buffer = readFileSync(filePath);
+        const filename = filenameFromPath(filePath);
+
+        const result = await client.analyzeVideo({
+          file: buffer,
+          filename,
+          ageGroup: args.age_group as string | undefined,
+        });
+        return { content: [{ type: 'text', text: formatVideoResult(result) }] };
       }
 
       default:
