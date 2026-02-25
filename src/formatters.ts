@@ -59,7 +59,12 @@ ${result.rationale}
 ### Recommended Action
 \`${result.recommended_action}\`
 
+  const messageAnalysis = result.message_analysis && result.message_analysis.length > 0
+    ? `### Message Analysis\n${result.message_analysis.map(m => `- **Message ${m.message_index}** (risk: ${(m.risk_score * 100).toFixed(0)}%) — ${m.summary}${m.flags.length > 0 ? ` [${m.flags.join(', ')}]` : ''}`).join('\n')}`
+    : '';
+
 ${evidence}
+${messageAnalysis}
 ${calibration}`.trim();
 }
 
