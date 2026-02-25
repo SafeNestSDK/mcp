@@ -16,6 +16,13 @@ export interface AgeCalibration {
   multiplier?: number;
 }
 
+export interface MessageAnalysis {
+  message_index: number;
+  risk_score: number;
+  flags: string[];
+  summary: string;
+}
+
 export interface DetectionResult {
   endpoint: string;
   detected: boolean;
@@ -26,6 +33,7 @@ export interface DetectionResult {
   categories: DetectionCategory[];
   evidence?: DetectionEvidence[];
   age_calibration?: AgeCalibration;
+  message_analysis?: MessageAnalysis[];
   recommended_action: string;
   rationale: string;
 }
@@ -47,6 +55,7 @@ export interface GroomingResult {
   rationale: string;
   risk_score: number;
   recommended_action: string;
+  message_analysis?: MessageAnalysis[];
 }
 
 export interface UnsafeResult {

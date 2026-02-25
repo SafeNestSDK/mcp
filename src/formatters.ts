@@ -46,6 +46,10 @@ export function formatDetectionResult(result: DetectionResult): string {
     ? `**Age Calibration:** ${result.age_calibration.age_group} (${result.age_calibration.multiplier}x)`
     : '';
 
+  const messageAnalysis = result.message_analysis && result.message_analysis.length > 0
+    ? `### Message Analysis\n${result.message_analysis.map(m => `- **Message ${m.message_index}** (risk: ${(m.risk_score * 100).toFixed(0)}%) — ${m.summary}${m.flags.length > 0 ? ` [${m.flags.join(', ')}]` : ''}`).join('\n')}`
+    : '';
+
   return `${header}
 
 **Risk Score:** ${(result.risk_score * 100).toFixed(0)}%
@@ -60,6 +64,7 @@ ${result.rationale}
 \`${result.recommended_action}\`
 
 ${evidence}
+${messageAnalysis}
 ${calibration}`.trim();
 }
 
