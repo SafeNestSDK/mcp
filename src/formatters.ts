@@ -1,12 +1,5 @@
 import type { DetectionResult, AnalyseMultiResult, VideoAnalysisResult } from '@tuteliq/sdk';
 
-interface MessageAnalysis {
-  message_index: number;
-  risk_score: number;
-  flags: string[];
-  summary: string;
-}
-
 export const severityEmoji: Record<string, string> = {
   low: '\u{1F7E1}',
   medium: '\u{1F7E0}',
@@ -53,9 +46,8 @@ export function formatDetectionResult(result: DetectionResult): string {
     ? `**Age Calibration:** ${result.age_calibration.age_group} (${result.age_calibration.multiplier}x)`
     : '';
 
-  const msgAnalysis = (result as DetectionResult & { message_analysis?: MessageAnalysis[] }).message_analysis;
-  const messageAnalysis = msgAnalysis && msgAnalysis.length > 0
-    ? `### Message Analysis\n${msgAnalysis.map(m => `- **Message ${m.message_index}** (risk: ${(m.risk_score * 100).toFixed(0)}%) — ${m.summary}${m.flags.length > 0 ? ` [${m.flags.join(', ')}]` : ''}`).join('\n')}`
+  const messageAnalysis = result.message_analysis && result.message_analysis.length > 0
+    ? `### Message Analysis\n${result.message_analysis.map(m => `- **Message ${m.message_index}** (risk: ${(m.risk_score * 100).toFixed(0)}%) — ${m.summary}${m.flags.length > 0 ? ` [${m.flags.join(', ')}]` : ''}`).join('\n')}`
     : '';
 
   return `${header}
